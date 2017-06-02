@@ -17,3 +17,4 @@ HXThreeFactor <- merge(HXRet, ThrFac, all = FALSE)
 
 pairs(coredata(HXThreeFactor), pch = 20, col = 'blue', main = "pair plot of Return of HuaXiaBank and ThreeFactors")
 
+regThrFac <- lm(HXRet~RiskPremium1+SMB1+HML1, data = HXThreeFactor)
