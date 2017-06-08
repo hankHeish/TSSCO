@@ -4,6 +4,7 @@ library(quantmod)
 library(TTR)
 library(fPortfolio)
 library(BLCOP)
+library(zoo)
 # library(fAssets)
 # library(MASS)
 # library(quadprog)
@@ -17,7 +18,8 @@ cumreturn <- cumprod(1 + sh_return)
 plot.zoo(cumreturn, type = "l", lty = 1:5, ylim = c(0, 3.5), col = 1:5, main = "Cumulative Return")
 
 #Correlation matrix 
-pairs(data.frame(sh_return), pch = 20, col = 'darkgreen', main = "Correlation")
+#pairs(data.frame(sh_return), pch = 20, col = 'darkgreen', main = "Correlation")
+pairs(coredata(sh_return), pch = 20, col = 'darkgreen', main = "Correlation")
 
 #Markowitz Model 
 #minimize Risk 
@@ -58,6 +60,7 @@ test_return <- xts(test_return, order.by = index(test_set))
 test_cum_return <- cumprod(1 + test_return)
 plot.xts(test_cum_return)
 
+#simulation portfolio weight and return 
 L <- 100
 sim_weight <- t(sapply(1:L, FUN = function(i)
     {
