@@ -13,9 +13,11 @@ sd_vect <- sqrt(diag(cov_vect))
 corr_vect <- cor(R)
 
 #Set the Constraints Matrix
-Amat <- cbind(rep(1, 3), mean_vect)
+Amat <- cbind(rep(1, 3), mean_vect, diag(1, nrow = 3))
+
 #Target Portfolio mean
-muP <- seq(0.05, 0.14, length = 300)
+#muP <- seq(0.05, 0.14, length = 300)
+muP <- seq(min(mean_vect) + 0.0001, max(mean_vect) - 0.0001, length = 300)
 
 #For the Expect Portfolio Return
 sdP <- muP
@@ -23,7 +25,7 @@ weights <- matrix(0, nrow = 300, ncol = 3)
 
 for (i in 1:length(muP))
 {
-    bvec <- c(1, muP[i])
+    bvec <- c(1, muP[i], rep(0, 3))
     result <- solve.QP(Dmat = 2 * cov_vect,
                        dvec = rep(0, 3),
                        Amat = Amat,
@@ -55,7 +57,8 @@ ind2 <- (sdP == min(sdP))
 points(sdP[ind2], muP[ind2], cex = 2, pch = "+")
 
 ind3 <- (muP > muP[ind2])
-lines(sdP[ind3], muP[ind3], type = "l", xlim = c(0, 0.25), ylim = c(0, 0.3), lwd = 3, col = "red")
+#lines(sdP[ind3], muP[ind3], type = "l", xlim = c(0, 0.25), ylim = c(0, 0.3), lwd = 3, col = "red")
+lines(sdP[ind3], muP[ind3], type = "l", lwd = 3, col = "red")
 
 text(sd_vect[1], mean_vect[1], "GE", cex = 1.15)
 text(sd_vect[2], mean_vect[2], "IBM", cex = 1.15)
@@ -97,13 +100,13 @@ for (i in 1:nlambda)
     ExUtil_vect[i] <- opt$value
 }
 
-par(mfrow = c(3, 1))
+par(mfrow = c(1, 3))
 plot(loglambda_vect, mu_vect, type = "l", col = "darkred")
 plot(loglambda_vect, sd_vect, type = "l", col = "darkblue")
 plot(sd_vect, mu_vect, type = "l", col = "darkgreen", main = "Efficiency Frontier")
 
-#16.10 R Lab
-#Efficiency Equity Portfolio
+# #16.10 R Lab
+# #Efficiency Equity Portfolio
 prices <- cbind(data$GM_AC, data$F_AC, data$CAT_AC, data$UTX_AC, data$MRK_AC, data$IBM_AC)
 n <- dim(prices)[1]
 
@@ -114,7 +117,45 @@ mean_vect <- colMeans(returns)
 cov_mat <- cov(returns)
 sd_vect <- sqrt(diag(cov_mat))
 
+Amat <- cbind(rep(1, 6), mean_vect, diag(1, nrow = 6), diag(-1, nrow = 6))
+muP <- seq(0.05, 0.14, length = 600)
+sdP <- muP
+weight <- matrix(0, nrow = 600, ncol = 6)
 
+for (i in 1:length(muP))
+{
+    bvec <- c(1, muP[i], rep(-0.1, 6), rep(-0.5, 6))
+    result <- solve.QP(Dmat = 2 * cov_mat, 
+                       dvec = rep(0, 6), 
+                       Amat = Amat, 
+                       bvec = bvec,
+                       meq = 2)
+    sdP[i] <- sqrt(result$value)
+    weight[i, ] <- result$solution
+}
+
+par(mfrow = c(1, 1))
+plot(sdP, muP, type = "l", lty = 1.5, main = "Portfolio Selection")
+
+#mufree <- 1.3 / 252
+mufree <- 3 / 365
+points(0, mufree, cex = 2.5, pch = "*")
+
+SharpeRatio <- (muP - mufree) / sdP
+index_max <- (SharpeRatio == max(SharpeRatio))
+print(weight[index_max, ])
+lines(c(0, 4), mufree + c(0, 4) * (muP[index_max] - mufree) / sdP[index_max], lwd = 2, lty = 1, col = "darkblue")
+points(sdP[index_max], muP[index_max], cex = 1, pch = "+")
+
+index_min <- (sdP == min(sdP))
+points(sdP[index_min], muP[index_min], cex = 1, pch = "#")
+
+index_effi <- (muP > muP[index_min])
+lines(sdP[index_effi], muP[index_effi], cex = 1.5, type = "l", col = "darkred", lwd = 2)
+
+brand <- c("GM", "F", "CAT", "UTX", "MRK", "IBM")
+for (i in 1:length(brand))
+    text(sd_vect[i], mean_vect[i], brand[i], cex = 1)
 
 
 
