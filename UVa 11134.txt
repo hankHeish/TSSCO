@@ -1,0 +1,40 @@
+题意  在n*n的棋盘上的n个指定区间上各放1个'车’  使他们相互不攻击   输出一种可能的方法
+行和列可以分开看  就变成了n个区间上选n个点的贪心问题  看行列是否都有解就行   
+基础的贪心问题  对每个点k选择包含它的最优未使用区间   由于在给k找最优区间时1~k-1的最优区间都已经找好了  所有右界最小的区间肯定是最优区间
+
+#include <bits/stdc++.h>  
+using namespace std;  
+const int N = 5005;  
+int xl[N], yl[N], xr[N], yr[N], x[N], y[N], n;  
+  
+bool solve(int a[], int l[], int r[])  
+{  
+    int cur, mr;  
+    //mr为包含k的区间最小右界，cur为放k的最优区间  
+    memset(a, -1, sizeof(int)*n);  
+    for(int k = 1; k <= n; ++k)  
+    {  
+        cur = -1, mr = N;  
+        for(int i = 0; i < n; ++i)  
+            if(a[i] < 0 && l[i] <= k && r[i] < mr)  
+                mr = r[cur = i];  
+        if(cur < 0 || k > mr)  return 0;  
+        a[cur] = k;  
+    }  
+    return 1;  
+}  
+  
+int main()  
+{  
+    while(~scanf("%d", &n), n)  
+    {  
+        for(int i = 0; i < n; ++i)  
+            scanf("%d%d%d%d", &xl[i], &yl[i], &xr[i], &yr[i]);  
+  
+        if(solve(x, xl, xr) && solve(y, yl, yr))  
+            for(int i = 0; i < n; ++i)  
+                printf("%d %d\n", x[i], y[i]);  
+        else puts("IMPOSSIBLE");  
+    }  
+    return 0;  
+}  
