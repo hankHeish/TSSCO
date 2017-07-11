@@ -5,35 +5,35 @@ library(TTR)
 library(urca)
 library(forecast)
 
-# Index <- read.csv("C:/Users/J1060019/Desktop/R Quant/part 4/022/TRD_Index.txt", header = TRUE, sep = "\t")
-# SHIndex <- Index[Index$Indexcd == 1, ]
-# 
-# ClsIndex <- SHIndex$Clsindex
-# ClsIndex <- xts(ClsIndex, order.by = as.Date(SHIndex$Trddt))
-# names(ClsIndex) <- "ClsIndex"
-# 
-# plot(ClsIndex, main = "Close Index")
-# #hist(ClsIndex, breaks = 50, col = 'lightblue', broder = FALSE, main = "Histogram of ClsIndex")
-# 
-# SHRet <- xts(SHIndex$Retindex, order.by = as.Date(SHIndex$Trddt))
-# plot(SHRet, main = "Return Series")
-# 
-# #Autocorrelation Coeffieient and Partial Autocorrelation Coeffieient
-# acf(SHRet, lag.max = 40)
-# pacf(SHRet, lag.max = 40)
-# acf(ClsIndex, lag.max = 40)
-# 
-# #uni root test
-# ur.df(SHRet, type = 'none')
-# summary(ur.df(SHRet, type = 'none'))
-# 
-# #white noise 
-# set.seed(100)
-# WhiteNoise <- rnorm(500, mean = 0, sd = 1)
-# plot(WhiteNoise, type = 'l', main = "white noise", col = 'darkblue')
-# 
-# #White Noise Test(Ljung-Box test)
-# Box.test(SHRet, lag = 12, type = 'Ljung-Box')
+Index <- read.csv("C:/Users/J1060019/Desktop/R Quant/part 4/022/TRD_Index.txt", header = TRUE, sep = "\t")
+SHIndex <- Index[Index$Indexcd == 1, ]
+
+ClsIndex <- SHIndex$Clsindex
+ClsIndex <- xts(ClsIndex, order.by = as.Date(SHIndex$Trddt))
+names(ClsIndex) <- "ClsIndex"
+
+plot(ClsIndex, main = "Close Index")
+#hist(ClsIndex, breaks = 50, col = 'lightblue', broder = FALSE, main = "Histogram of ClsIndex")
+
+SHRet <- xts(SHIndex$Retindex, order.by = as.Date(SHIndex$Trddt))
+plot(SHRet, main = "Return Series")
+
+#Autocorrelation Coeffieient and Partial Autocorrelation Coeffieient
+acf(SHRet, lag.max = 40)
+pacf(SHRet, lag.max = 40)
+acf(ClsIndex, lag.max = 40)
+
+#uni root test
+ur.df(SHRet, type = 'none')
+summary(ur.df(SHRet, type = 'none'))
+
+#white noise
+set.seed(100)
+WhiteNoise <- rnorm(500, mean = 0, sd = 1)
+plot(WhiteNoise, type = 'l', main = "white noise", col = 'darkblue')
+
+#White Noise Test(Ljung-Box test)
+Box.test(SHRet, lag = 12, type = 'Ljung-Box')
 
 #========================================
 #use ARMA to Predict CPI

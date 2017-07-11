@@ -71,7 +71,7 @@ colnames(newData) <- c("Lhs", colnames(assetReturn))
 
 #Set Estimate Condition
 portSpec <- portfolioSpec()
-myConstraints <- "LongOnly"
+myConstraints <- "Long"
 
 if (myConstraints == "Short")
 {
@@ -103,9 +103,3 @@ advice0 <- t(tail(smoothWeights, 1))
 rownames(advice0) <- ID
 
 backtestPlot(smoothOutput, which = "all", cex = 0.6, font = 1, family = "mono")
-
-
-
-
-
-
