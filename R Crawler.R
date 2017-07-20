@@ -1,6 +1,7 @@
 #R Crawler
 library(rvest)
 library(tmcn)
+library(stringr)
 
 #IMDB
 html <- read_html("http://www.imdb.com/title/tt1490017/")
@@ -65,5 +66,42 @@ for (i in 1:length(R.hrefs))
     
     Sys.sleep(sample(3:5, 1))
 }
+
+#Read Weather Data
+get_tianqi_table <- function(city = "taibei", year.from = 2015, year.to = 2016)
+{
+    month <- c(paste0("0", 1:9), "10", "11", "12")
+    url.list <- c()
+    for (year in year.from:year.to)
+    {
+        url <- paste0("http://lishi.tianqi.com/taibei/", year, month, ".html")
+        url.list <- c(url.list, url)
+    }
+    
+    tianqi.table <- NULL
+    
+    for (x in url.list)
+    {
+        html <- read_html(x)
+        wdata <- html_text(html_nodes(html, 'tqtongji2'))
+        content <- toTrad(wdata)
+        
+        content.tmp <- str_replace_all(content, "[\r\n\t]", "")
+        content.tmp2 <- strsplit(str_trim(content.tmp), "\\s+")[[1]]
+        tmp <- as.data.frame(matrix(content.tmp2[-(1:6)], ncol = 6, byrow = T))
+        
+        colnames(tmp) <- content.tmp2[1:6]
+        tianqi.table <- rbind(tianqi.table, tmp)
+        
+    }
+    tianqi.table
+}
+
+
+
+
+
+
+
 
 
