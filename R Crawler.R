@@ -50,6 +50,37 @@ getContent <- function(x){
 }
 getContent(as.character(realtimenews$url[1]))
 
+# =============================Bank of Taiwan Interest Rate==================================
+#Interest Rate 
+BOT.rate <- read_html("http://rate.bot.com.tw/xrt?lang=zh-tw")
+
+dollar <- html_nodes(BOT.rate, ".print_show")
+dollar.utf8 <- toUTF8(html_text(dollar))
+
+# news.category <- html_text(html_nodes(apple.news, '.rtddt h2'))
+# Cash_Bid <- html_text(html_nodes(BOT.rate, ".print_hide"))
+# Cash <- as.matrix(Cash_Bid)
+
+Spot <- html_text(html_nodes(BOT.rate, ".print_width"))
+Mtx <- as.matrix(Spot)
+
+Spot_Bid <- html_text(html_nodes(BOT.rate, ".print_width"))
+Spot_Bid <- as.matrix(Spot_Bid)
+
+# Cash_Bid_utf8 <- toUTF8(html_text(Cash_Bid))
+Rate <- data.frame(currency = dollar.utf8)
+
+
+# =============================Yahoo Finance Domestic Fund==================================
+yahoo.finance <- read_html("https://tw.money.yahoo.com/fund/domestic")
+
+fund.comp <- html_text(html_nodes(yahoo.finance, ".Bgc-w"))
+# fund.comp <- html_text(html_nodes(yahoo.finance, ".Pstart-4"))
+
+
+Fund <- data.frame(Comp = fund.comp)
+# ==========================================================================================
+
 #PTT R-Language
 url.main <- 'https://www.ptt.cc/bbs/R_Language/index.html'
 href.title <- html_nodes(read_html(url.main), ".title a")
@@ -75,6 +106,7 @@ get_tianqi_table <- function(city = "taibei", year.from = 2015, year.to = 2016)
     for (year in year.from:year.to)
     {
         url <- paste0("http://lishi.tianqi.com/taibei/", year, month, ".html")
+        # print(url)
         url.list <- c(url.list, url)
     }
     
@@ -83,18 +115,18 @@ get_tianqi_table <- function(city = "taibei", year.from = 2015, year.to = 2016)
     for (x in url.list)
     {
         html <- read_html(x)
-        wdata <- html_text(html_nodes(html, 'tqtongji2'))
+        wdata <- html_text(html_nodes(html, '.tqtongji2'))
         content <- toTrad(wdata)
         
         content.tmp <- str_replace_all(content, "[\r\n\t]", "")
         content.tmp2 <- strsplit(str_trim(content.tmp), "\\s+")[[1]]
-        tmp <- as.data.frame(matrix(content.tmp2[-(1:6)], ncol = 6, byrow = T))
+        tmp <- as.data.frame(matrix(content.tmp[-(1:6)], ncol = 6, byrow = T))
         
         colnames(tmp) <- content.tmp2[1:6]
         tianqi.table <- rbind(tianqi.table, tmp)
         
     }
-    tianqi.table
+    # tianqi.table
 }
 
 
