@@ -3,6 +3,7 @@
 library(rvest)
 library(tmcn)
 library(stringr)
+library(RODBC)
 
 #Bank of Taiwan: The Spot Exchange Rate\
 url <- read_html("http://rate.bot.com.tw/xrt?lang=zh-tw")
@@ -63,7 +64,7 @@ ForDeposit <- matrix(0, n, 10)
 
 for (i in 1:n)
 {
-    ForDeposit[i, 1] <- as.character(ExgRate.name[i, 1])
+    ForDeposit[i, 1] <- str_trim(as.character(ExgRate.name[i, 1])) 
 }
 for (i in 1:len)
 {
@@ -75,5 +76,38 @@ for (i in 1:len)
 }
 colnames(ForDeposit) <- c("currency", "current account", "7 days", "14 days", "21 days", "1 month", 
                           "3 months", "6 months", "9 months", "1year")
+
+myCon_41 <- odbcConnect(dsn = 'cmoney_41', uid = 'hank', pwd = 'hank')
+
+# InsertDB <- function(ForDeposit)
+# {
+#     insert.SQL <- "insert into [TestSherlock].[dbo].[ForeignExchange]"
+#     insert.SQL <- paste(insert.SQL, "values(")
+# }
+# Insert.SQL <- "insert into [TestSherlock].[dbo].[ForeignExchange]"
+# Insert.SQL <- paste(Insert.SQL, "values('¬üª÷(USD)', 0.23, 0.55, 0.55, 0.55, 0.6, 0.8, 1.1, 1.25, 1.4)")
+# apply(ForDeposit, 1, )
+ForDeposit <- as.data.frame(ForDeposit)
+
+for (i in 1:n)
+{
+    # print (i)
+    insert.sql <- "insert into [TestSherlock].[dbo].[ForeignExchange]"
+    insert.sql <- paste(insert.sql, " values('", ForDeposit[i, 1], "', ", ForDeposit[i, 2], ", ",ForDeposit[i, 3], ", ", ForDeposit[i, 4], ", "
+                        , ForDeposit[i, 5], ", ", ForDeposit[i, 6], ", ", ForDeposit[i, 7], ", ", ForDeposit[i, 8], ", ", ForDeposit[i, 9], ", "
+                        , ForDeposit[i, 10], ")",  sep = "")
+    # print(insert.sql)
+    sqlQuery(myCon_41, insert.sql)
+}
+
+
+
+
+
+
+
+
+
+
 
 
