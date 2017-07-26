@@ -11,7 +11,7 @@ url.path <-  "http://www.tpex.org.tw"
 DL.csv.path <- "C:/Users/J1060019/Desktop/R"
 myCon_41 <- odbcConnect(dsn = 'cmoney_41', uid = 'hank', pwd = 'hank')
 
-#1.公債等值買賣斷即時行情-盤中報價行情表
+# 1.公債等值買賣斷即時行情-盤中報價行情表
 url <- read_html("http://www.tpex.org.tw/web/bond/tradeinfo/market/ebts_ops/quotes.php?l=zh-tw")
 
 Bond.csv <- url %>% 
@@ -34,8 +34,12 @@ Insert.Bond <- function(data, myCon){
     }
     if(grepl("-", as.character(data[4]))){
         data[4] <- "NULL"
-    }   
+    }
+    sDate <- substr(Sys.time(), 1, 10)
+    sTime <- gsub(":", "", substr(Sys.time(), 12, 20))
+    
     mySQL <- "insert into [TestSherlock].[dbo].[Bond] values("
+    mySQL <- paste(mySQL, sDate, ", ", sTime, ", ", sep = "")
     mySQL <- paste(mySQL, "'", data[1], "', '", data[2], "', ",sep = "")
     mySQL <- paste(mySQL, paste0(data[3:4], collapse = ", "), ")", sep = "")
 
@@ -66,28 +70,27 @@ for (i in 1:len){
 Bond_RPRS <- Bond_RPRS[-c(1:3), ]
 colnames(Bond_RPRS) <- RPRS_name
 
-replace_NULL_character <- function(x){
-    cat(x, "\n")
-    # print(paste("replace_NULL_character", x, sep = " "))
-    if (grepl("-", as.character(x))){
-        # print(x)
-        # x <- "NULL"
-    }
+#Insert Bond_RPRS into [TestSherlock].[dbo].[Bond_RPRS]
+if (dim(Bond_RPRS)[1] > 0){
     
+    Insert.Bond_RPRS <- function(data, myCon){
+    
+        insert.data <- gsub("-", "NULL", data)
+        sDate <- substr(Sys.time(), 1, 10)
+        sTime <- gsub(":", "", substr(Sys.time(), 12, 20))
+        
+        mySQL <- "insert into [TestSherlock].[dbo].[Bond_RPRS] values("
+        mySQL <- paste0(mySQL, sDate, ", ", sTime, ", ")
+        mySQL <- paste0(mySQL, "'", insert.data[1], "', '", insert.data[2], "', ")
+        mySQL <- paste0(mySQL, paste0(insert.data[3:20], collapse = ", "), ")")
+        
+        sqlQuery(myCon, mySQL)
+    }
+    apply(Bond_RPRS, 1, FUN = Insert.Bond_RPRS, myCon_41)
 }
 
-Insert.Bond_RPRS <- function(data, myCon){
-    # print(data)
-    apply(as.matrix(data), 2, FUN = replace_NULL_character)
-    # print(paste("Insert.Bond_RPRS", dim(data), sep = " "))
-    # apply(data, 2, FUN = replace_NULL_character)
-    # 
-    # print(data)
-    # print(data)
-}
-apply(Bond_RPRS, 1, FUN = Insert.Bond_RPRS, myCon_41)
 
-#3.公司債即時行情- a.等殖買賣斷盤中報價行情
+# 3.公司債即時行情- a.等殖買賣斷盤中報價行情
 url <- read_html("http://www.tpex.org.tw/web/bond/tradeinfo/market/cb/quotes.php?l=zh-tw")
 
 Bond_CB.csv <- url %>%
@@ -110,19 +113,30 @@ for (i in 1:len){
 Bond_CB <- Bond_CB[-c(1:4), ]
 colnames(Bond_CB) <- CB_name
 
+#Insert Bond_CB into [TestSherlock].[dbo].[Bond_CB]
 if (dim(Bond_CB)[1] != 0)
 {
-    Insert.BOnd_CB <- function(data, myCon){
+    Insert.Bond_CB <- function(data, myCon){
+        if (data[3] == "-"){
+            data[3] <- "NULL"
+        }
+        if (data[4] == "-"){
+            data[4] <- "NULL"
+        }
+        sDate <- substr(Sys.time(), 1, 10)
+        sTime <- gsub(":", "", substr(Sys.time(), 12, 20))
+        
         mySQL <- "insert into [TestSherlock].[dbo].[Bond_CB] values("
+        mySQL <- paste0(mySQL, sDate, ", ", sTime, ", ")
         mySQL <- paste(mySQL, "'", data[1], "', '", data[2], "', ",sep = "")
         mySQL <- paste(mySQL, paste0(data[3:4], collapse = ", "), ")", sep = "")
         
         sqlQuery(myCon, mySQL)
     }
-    apply(Bond_CB, 1, FUN = Insert.BOnd_CB, myCon_41)
+    apply(Bond_CB, 1, FUN = Insert.Bond_CB, myCon_41)
 }
 
-#3.公司債即時行情- b.處所議價盤中報價行情
+# 3.公司債即時行情- b.處所議價盤中報價行情
 url <- read_html("http://www.tpex.org.tw/web/bond/tradeinfo/market/fixed_income/WAW30601.php?l=zh-tw")
 
 Bond_FX.csv <- url %>% 
@@ -146,13 +160,19 @@ for (i in 1:len){
 Bond_FX <- Bond_FX[-c(1:3), ]
 colnames(Bond_FX) <- FX_name
 
+#Insert Bond_FX into [TestSherlock].[dbo].[Bond_FX]
 if (dim(Bond_FX)[1] != 0){
     
     Insert.Bond_FX <- function(data, myCon){
+        insert.data <- gsub("-", "NULL", data)
+        sDate <- substr(Sys.time(), 1, 10)
+        sTime <- gsub(":", "", substr(Sys.time(), 12, 20))
+        
         mySQL <- "insert into [TestSherlock].[dbo].[Bond_FX] values("
-        mySQL <- paste(mySQL, "'", data[1], "', '", data[2], "', ",sep = "")
-        mySQL <- paste(mySQL, paste0(as.character(data[3:4]), collapse = ","), ", ", sep = "")
-        mySQL <- paste(mySQL, paste0(data[5:9], collapse = ", "), ")", sep = "")
+        mySQL <- paste0(mySQL, sDate, ", ", sTime, ", ")
+        mySQL <- paste(mySQL, "'", insert.data[1], "', '", insert.data[2], "', ",sep = "")
+        mySQL <- paste(mySQL, paste0(as.character(insert.data[3:4]), collapse = ","), ", ", sep = "")
+        mySQL <- paste(mySQL, paste0(insert.data[5:9], collapse = ", "), ")", sep = "")
         
         # print(mySQL)
         sqlQuery(myCon, mySQL)
