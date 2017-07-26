@@ -98,8 +98,14 @@ ForDeposit <- as.data.frame(ForDeposit)
 # }
 
 insert.sql <- function(arr, myCon){
+    
+    insert.arr <- gsub("-", "NULL", arr)
+    sDate <- substr(Sys.time(), 1, 10)
+    sTime <- gsub(":", "", substr(Sys.time(), 12, 20))
+    
     mySQL <- "insert into [TestSherlock].[dbo].[ForeignExchange] values("
-    mySQL <- paste0(mySQL, "'", arr[1], "', ", paste0(arr[2:10], collapse = ", "), ")")
+    mySQL <- paste0(mySQL, sDate, ", ", sTime, ", ")
+    mySQL <- paste0(mySQL, "'", insert.arr[1], "', ", paste0(insert.arr[2:10], collapse = ", "), ")")
     
     # print(mySQL)
     sqlQuery(myCon, mySQL)
