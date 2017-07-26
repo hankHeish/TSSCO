@@ -1,31 +1,12 @@
-Der Sherlock :
-
-晨報需要的資訊看附件
-原則上就是 美股、歐股、商品期貨(輕原油、黃金、美元指數)、台股等 一些行情或是重要的經濟數據與頭條 的報告
-
-
-http://www.wantgoo.com/
-http://news.cnyes.com/news/cat/headline
-上面是一些頭條與消息
-
-
-至於商品期貨的價格資訊，則是需要看外期的報價
-http://option.masterlink.com.tw/aiwa_quoter_index.asp
-
-交易所那邊可以選擇
-NYM : 可以看到 CMX GC 黃金 , NY PYS CR 輕原油
-元富的web外期報價，好像沒有美元指數
-
+商品期貨的價格資訊，則是需要看外期的報價
+	http://option.masterlink.com.tw/aiwa_quoter_index.asp
 
 鉅亨網的外期報價 (有商品與美元指數)
-http://www.cnyes.com/futures/price.aspx?ga=nav
-http://www.cnyes.com/forex/html5chart.aspx?fccode=DX&rate=exchange
-
-
-Max
+	http://www.cnyes.com/futures/price.aspx?ga=nav
+	http://www.cnyes.com/forex/html5chart.aspx?fccode=DX&rate=exchange
 
 CPE level
-http://par.cse.nsysu.edu.tw/~advprog/advprog2017/star.php
+	http://par.cse.nsysu.edu.tw/~advprog/advprog2017/star.php
 
 
 網路爬蟲實作 - 用 r 語言打造自己的爬蟲程式
