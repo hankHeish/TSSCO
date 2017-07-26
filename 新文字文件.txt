@@ -36,3 +36,12 @@ http://par.cse.nsysu.edu.tw/~advprog/advprog2017/star.php
 
 ADR Dividend
 	http://www.nasdaq.com/zh/symbol/spil/dividend-history
+
+金融工程学
+	https://www.zhihu.com/topic/19953842#2402
+
+R的极客理想系列文章
+	http://blog.fens.me/series-r/
+	
+R系列筆記
+	http://rpubs.com/skydome20/Table
