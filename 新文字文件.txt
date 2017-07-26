@@ -25,3 +25,9 @@ R的极客理想系列文章
 	
 R系列筆記
 	http://rpubs.com/skydome20/Table
+
+Smart Beta 
+	https://read01.com/mnKe7m.html	Smart Beta：演進、挑戰及未來方向
+	https://read01.com/40DPN4.html	Smart Beta投資策略簡析
+	https://read01.com/RJ6OBP.html	全球Smart Beta策略的發展及應用
+	https://read01.com/GJNzgM.html	從Seeking Alpha 到 Smart Beta (上)
