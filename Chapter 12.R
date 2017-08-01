@@ -250,14 +250,32 @@ plot(ts(as.vector(CPI_diff1), start = c(1977, 2), frequency = 12),
 plot(ts(as.vector(CPI_diff2), start = c(1977, 3), frequency = 12), 
      xlab = "year", ylab = expression(paste(Delta^2, "log(CPI)")), type = "b", main = "(c)")
 
-# Example 12.11 Fitting an ARIMA Model to Industrial Production(IP) Data
-IP <- read.csv("/Users/Heishminghan/Desktop/Statistics and Data Analysis for Financial Engineering/IP.dat.csv", header = T)
-log_IP <- log(IP$IP)
+# Figure 12.16 
+par(mfrow = c(2, 2))
+acf(log(CPI), lag.max = 25, xlab = "Lag", ylab = "ACF", main = "log(CPI)")
+acf(CPI_diff1, lag.max = 25, xlab = "Lag", ylab = "ACF", main = expression(paste(Delta, "log(CPI)")))
+acf(CPI_diff2, lag.max = 25, xlab = "Lag", ylab = "ACF", main = expression(paste(Delta^2, "log(CPI)")))
+acf(fit_ma$residuals, lag.max = 25, xlab = "Lag", ylab = "ACF", main = "residuals, ARIMA(0, 2, 2)")
 
-par(mfrow = c(3, 1))
-plot(log_IP, type = "l", main = "log_IP I(0)")
-print(Box.test(log_IP, lag = 10, type = "Ljung-Box"))
-plot(diff(log_IP), type = "l", col = "darkred", main = "log_IP I(1)")
-print(Box.test(diff(log_IP), lag = 10, type = "Ljung-Box"))
-plot(diff(log_IP, differences = 2), type = "l", col = "darkgreen", main = "log_IP I(2)")
-print(Box.test(diff(log_IP, differences = 2), lag = 10, type = "Ljung-Box"))
+
+
+# Example 12.11 Fitting an ARIMA Model to Industrial Production(IP) Data
+IP.data <- read.csv("C:/Users/J1060019/Desktop/datasets/IP.dat.csv", header = TRUE)
+logIP <- log(as.matrix(IP.data$IP)[697:828, ])
+logIP_diff1 <- as.vector(diff(logIP))
+
+auto.arima(logIP_diff1, max.p = 2, max.q = 2, d = 0, ic = 'bic', trace = TRUE)
+fitARMA10 <- arima(logIP_diff1, order = c(1, 0, 0))
+
+par(mfrow = c(2, 2))
+plot(logIP, main = "(a)",type = "b")
+plot(diff(logIP), main = "(b)", type = "b")
+acf(diff(logIP), main = "(c)")
+acf(fitARMA10$residuals, main = "(d)")
+
+
+
+
+
+
+
