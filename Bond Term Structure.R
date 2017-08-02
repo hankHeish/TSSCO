@@ -174,8 +174,19 @@ CB$Ask.chg.bp <- (CB$s.Ask.IR - CB$y.Ask.IR) / CB$y.Ask.IR * 10000
 CB$DV01.Ask <- (1 + CB$Ask.chg.bp / 10000) * CB$DV01
 
 # Insert Result to [TestSherlock].[dbo].[Instant_DV01.Bond]
+Insert_Instant_DV01 <- function(x, MyCon){
+    sDate <- substr(Sys.Date(), 1, 10)
+    sTime <- gsub(":", "", substr(Sys.time(), 12, 20))
+    
+    MySQL <- "Insert into [TestSherlock].[dbo].[Instant_DV01.Bond] values('"
+    MySQL <- paste0(MySQL, sDate, "', ", sTime, ", '", x[1], "', '", x[3], "', ")
+    MySQL <- paste0(MySQL, paste0(x[4:5], collapse = ", "), ", ", paste(x[7:14], collapse = ","), ")")
+    
+    sqlQuery(MyCon, MySQL)
+}
+apply(CB, 1, FUN = Insert_Instant_DV01, myCon_41)
 
-CB <- CB[, -c(6:10)]
+# CB <- CB[, -c(6:10)]
 
 # Close Connection to ODBC
 odbcClose(myCon_41)
