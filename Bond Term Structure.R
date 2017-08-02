@@ -106,13 +106,13 @@ GovBond_yDate[, 5:7] <- sapply(GovBond_yDate[, 5:7], function(x) as.numeric(as.c
 par(mfrow = c(1, 1))
 plot(GovBond_sDate$Durat, GovBond_sDate$Bid, type = "b", lwd = 1, 
      xlab = "Days", ylab = "interest rate(%)", main = "Term Structure(Bid)")
-lines(GovBond_yDate$Durat, GovBond_yDate$Bid, lty = 2, lwd = 1, col = "red")
+lines(GovBond_yDate$Durat, GovBond_yDate$Bid, type = "b", lty = 2, lwd = 1, col = "red")
 legend("bottomright", c("Today", "Yesterday"), lty = c(1, 2), lwd = 1, 
        col = c("black", "red"), cex = 0.7)
 
 plot(GovBond_sDate$Durat, GovBond_sDate$Ask, type = "b", lwd = 1, 
      xlab = "Days", ylab = "interest rate(%)", main = "Term Structure(Ask)")
-lines(GovBond_yDate$Durat, GovBond_yDate$Ask, lty = 2, lwd = 1, col = "red")
+lines(GovBond_yDate$Durat, GovBond_yDate$Ask, type = "b", lty = 2, lwd = 1, col = "red")
 legend("bottomright", c("Today", "Yesterday"), lty = c(1, 2), lwd = 1, 
        col = c("black", "red"), cex = 0.7)
 
