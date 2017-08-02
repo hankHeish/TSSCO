@@ -257,8 +257,6 @@ acf(CPI_diff1, lag.max = 25, xlab = "Lag", ylab = "ACF", main = expression(paste
 acf(CPI_diff2, lag.max = 25, xlab = "Lag", ylab = "ACF", main = expression(paste(Delta^2, "log(CPI)")))
 acf(fit_ma$residuals, lag.max = 25, xlab = "Lag", ylab = "ACF", main = "residuals, ARIMA(0, 2, 2)")
 
-
-
 # Example 12.11 Fitting an ARIMA Model to Industrial Production(IP) Data
 IP.data <- read.csv("C:/Users/J1060019/Desktop/datasets/IP.dat.csv", header = TRUE)
 logIP <- log(as.matrix(IP.data$IP)[697:828, ])
@@ -272,6 +270,139 @@ plot(logIP, main = "(a)",type = "b")
 plot(diff(logIP), main = "(b)", type = "b")
 acf(diff(logIP), main = "(c)")
 acf(fitARMA10$residuals, main = "(d)")
+
+# Example 12.12 Inflation Rate
+data(Mishkin, package = "Ecdat")
+y <- as.vector(Mishkin[, 1])
+auto.arima(y, max.p = 2, max.q = 2, d = 0, ic = "bic", trace = TRUE)
+polyroot(c(1, -1.29, 0.233))
+
+# Example 12.13 Inflation Rates - Unit Root Tests 
+library(tseries)
+adf.test(y)
+pp.test(y)
+kpss.test(y)
+
+# Example 12.14 Inflation Rates - Automatic Selection of an ARIMA Model
+auto.arima(y, max.p = 5, max.q = 5, ic = "aic", trace = FALSE)
+auto.arima(y, max.p = 5, max.q = 5, ic = "bic", trace = FALSE)
+
+fitARIMA111 <- arima(y, order = c(1, 1, 1))
+par(mfrow = c(1, 1))
+acf(fitARIMA111$residuals)
+Box.test(fitARIMA111$residuals, lag = 15, fitdf = 2)
+
+# 12.12 Forcasting
+# Example 12.15 Forcasting the one-month Inflation Rate
+# Figure 12.18
+data(Mishkin, package = "Ecdat")
+y <- as.vector(Mishkin[, 1])
+
+year <- seq(1950 + 1/12, 1990 + 11/12, 1/12)
+n <- length(year)
+logn <- log(n)
+
+fit <- arima(y, order = c(0, 1, 3))
+
+pred.fit <- predict(fit, n.ahead = 100, se.fit = TRUE)
+t1 <- 300:491
+t2 <- 492:(492 + 49 + 50)
+year <- seq(1950 + 1/12, 2001 + 61/12, 1/12)
+
+plot(year[t1], y[t1], ylim = c(-10, 18), type = "b", xlim = c(1975, 1990), xlab = "year", 
+     ylab = "Inflation Rate", cex.axis = 1.15, cex.lab = 1.15)
+points(year[t2], pred.fit$pred, type = "p", pch = "*")
+lines(year[t2], pred.fit$pred + 2 * pred.fit$se)
+lines(year[t2], pred.fit$pred - 2 * pred.fit$se)
+legend(1975, -3, c("data", "predictions", "lower CL", "upper CL"), 
+       cex = 0.7, box.lty = 1, pch = c("o", "*", NA, NA), lty = c(NA, NA, 1, 1))
+
+# Figure 12.19
+fit_diff <- arima(diff(y), order = c(0, 0, 3))
+
+pred.infl_diff <- predict(fit, n.ahead = 100, newxreg = NULL, se.fit = TRUE)
+t1 <- 300:491
+t2 <- 492:(492 + 49 + 50)
+year <- seq(1950 + 1/12, 2001 + 61/12, 1/12)
+
+plot(year[t1], diff(y)[t1], ylim = c(-9, 15), type = "b", xlim = c(1975, 1999), xlab = "year", 
+     ylab = "Change in Inflation Rate", cex.axis = 1.15, cex.lab = 1.15)
+points(year[t2], pred.infl_diff$pred, type = "p", pch = "*")
+lines(year[t2], pred.infl_diff$pred + 2 * pred.fit$se)
+lines(year[t2], pred.infl_diff$pred - 2 * pred.fit$se)
+legend(1975, 14, c("data", "predictions", "lower CL", "upper CL"), 
+       cex = 0.7, box.lty = 1, pch = c("o", "*", NA, NA), lty = c(NA, NA, 1, 1))
+
+# Example 12.16 Forcasting the One-Month Inflation Rate and Changes in the Inflation Rate by Simulation
+# Figure 12.20
+data(Mishkin[, 1], package = "Ecdat")
+infl <- as.vector(Mishkin[, 1])
+
+year <- seq(1950 + 1/12, 1990 + 11/12, 1/12)
+n <- length(year)
+logn <- log(n)
+
+fit_diff <- arima(diff(infl), order = c(0, 0, 3))
+pred.fit_diff <- predict(fit_diff, n.head = 100, newxreg = NULL, se.fit = TRUE)
+t1 <- 300:491
+t2 <- 492:(492 + 49 + 50)
+
+resid <- fit_diff$residuals[488:490]
+coef <- as.vector(fit_diff$coef[1:3])
+mu <- as.vector(fit_diff$coef[4])
+
+nither <- 50000
+n.ahead <- 30
+futureobs <- matrix(0, nrow = nither, ncol = n.ahead)
+future_int <- futureobs
+
+set.seed(1234657)
+for (i in 1:nither)
+{
+    errors <- sample(fit_diff$residuals, n.ahead, replace = TRUE)
+    errors <- c(resid, errors)
+    
+    for (j in 1:n.ahead)
+    {
+        futureobs[i, j] <- mu + errors[j + 3] + errors[j + 2]*coef[1] + errors[j + 1]*coef[2] + errors[j] * coef[3]
+
+        if (j > 1){
+            future_int[i, j] <- future_int[i, j - 1] + futureobs[i, j]
+        }
+        if (j == 1){
+            future_int[i, j] <- futureobs[i, j]
+        }
+    }
+}
+future_mean <- apply(futureobs, 2, mean)
+u1 <- 0*(1:n.ahead)
+l1 <- u1
+for (k in 1:n.ahead)
+{
+    u1[k] <- quantile(futureobs[, k], 0.975)
+    l1[k] <- quantile(futureobs[, k], 0.025)
+}
+
+plot(1:n.ahead, u1, ylim = c(-10, 10), type = "b", lwd = 2, xlab = "month rate", ylab = "rate", 
+     cex.axis = 1.5, cex.lab = 1.5)
+lines(l1, type = "b", lwd = 2)
+lines(1:n.ahead, pred.fit_diff$pred[1:n.ahead] - 1.96*pred.fit_diff[1:n.ahead], type = "b", lty = 3)
+lines(1:n.ahead, pred.fit_diff$pred[1:n.ahead] + 1.96*pred.fit_diff[1:n.ahead], type = "b", lty = 3)
+lines(1:n.ahead, future_mean, lwd = 2, lty = 2)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
