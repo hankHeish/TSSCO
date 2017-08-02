@@ -38,5 +38,5 @@ RStudio CheatSheets
 Nice R Code 
 	https://nicercode.github.io/guides/repeating-things/
 
-R Blog
+Useful R Blog
 	https://blog.stranity.com.tw/
