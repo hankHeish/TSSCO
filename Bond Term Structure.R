@@ -36,9 +36,6 @@ n <- dim(BondDue)[2]
 BondDue <- BondDue[, -n]
 colnames(BondDue) <- c("TxDate", "Bond_Name", "Bond_Code", "Issue_Date", "Due_Date")
 
-# Close Connection to ODBC
-odbcClose(myCon_41)
-
 # Merge Cb and BondDue
 CB <- merge(x = CB, y = BondDue, by = "Bond_Code", all.x = TRUE)
 CB <- CB %>%
@@ -52,15 +49,14 @@ for (i in 1:length(TrdDate))
 {
     LastTrdDate <- TrdDate[i]
     
-    
     MySQL <- "select *"
     MySQL <- paste0(MySQL, " from [TestSherlock].[dbo].[Bond]")
     MySQL <- paste0(MySQL, " where TxDate = '", LastTrdDate, "' and [Bond Code] like 'A0610%'")
-    MySQL <- paste0(MySQL, " order by [Bond Code], TimeTag")
     
     GovBond <- sqlQuery(myCon_41, MySQL)
     
     GovBond <- GovBond %>%
+        arrange(desc(as.integer(TimeTag))) %>% 
         distinct(GovBond[, 3], .keep_all = TRUE) 
     n <- dim(GovBond)[2]
     GovBond <- GovBond[, -n]
@@ -69,7 +65,7 @@ for (i in 1:length(TrdDate))
     # Merge GovBond and BonDue
     GovBond <- merge(x = GovBond, y = BondDue, by = "Bond_Code", all.x = TRUE)
     GovBond <- GovBond %>%
-        mutate(Durat = (GovBond[, 10] - GovBond[, 2])) %>%
+        mutate(Durat = as.integer(GovBond[, 10] - GovBond[, 2])) %>%
         arrange(Durat) %>%
         select(Bond_Code:Ask, Durat)
 
@@ -77,15 +73,37 @@ for (i in 1:length(TrdDate))
     assign(temp, GovBond)
 }
 
-# Dispose NA Value in GovBond
-GovBond_sDate[, 7] <- sapply(GovBond_sDate[, 7], function(x) ifelse(is.na(x), 730, x))
-GovBond_sDate <- GovBond_sDate %>% 
-    arrange(Durat)
-GovBond_yDate[, 7] <- sapply(GovBond_yDate[, 7], function(x) ifelse(is.na(x), 730, x))
-GovBond_yDate <- GovBond_yDate %>%
-    arrange(Durat)
+# Dispose NA Value in GovBond Duration
+GovCode <- c("A06107", "A06105", "A06102", "A06104", "A06108", "A06106")
+GovDue <- c(730, 1825, 1825, 3650, 7300, 10950)
+
+Fill_NULL_DueDate <- function(x){
+    if (is.na(x[7])){
+        for (i in 1:length(GovCode)){
+            if (x[1] == GovCode[i]){
+                x[7] <- GovDue[i]
+
+            }
+        }
+    }
+    
+    return (x)
+}
+
+GovBond_sDate <- apply(GovBond_sDate, 1, Fill_NULL_DueDate) %>%
+    t() %>% 
+    as.data.frame() %>%
+    arrange(as.numeric(levels(Durat))[Durat])
+GovBond_yDate <- apply(GovBond_yDate, 1, Fill_NULL_DueDate) %>%
+    t() %>% 
+    as.data.frame() %>%
+    arrange(as.numeric(levels(Durat))[Durat])
+
+GovBond_sDate[, 5:7] <- sapply(GovBond_sDate[, 5:7], function(x) as.numeric(as.character(x)))
+GovBond_yDate[, 5:7] <- sapply(GovBond_yDate[, 5:7], function(x) as.numeric(as.character(x)))
 
 # Plot Term Structure
+par(mfrow = c(1, 1))
 plot(GovBond_sDate$Durat, GovBond_sDate$Bid, type = "b", lwd = 1, 
      xlab = "Days", ylab = "interest rate(%)", main = "Term Structure(Bid)")
 lines(GovBond_yDate$Durat, GovBond_yDate$Bid, lty = 2, lwd = 1, col = "red")
@@ -134,6 +152,15 @@ Find_Range <- function(x, Rate, i){
     }
     
 }
+# Check Missing Value in Bid, Ask
+# check_NA_value <- function(x){
+#     if (is.na(x)){
+#         
+#     }
+# }
+# 
+# sapply(Chg.Rate.Bid$Bid_y, check_NA_value)
+# 
 
 # Interest Rate Change bp
 CB$y.Bid.IR <- sapply(CB[, 6], Find_Range, Chg.Rate.Bid, 1)
@@ -146,6 +173,9 @@ CB$s.Ask.IR <- sapply(CB[, 6], Find_Range, Chg.Rate.Ask, 2)
 CB$Ask.chg.bp <- (CB$s.Ask.IR - CB$y.Ask.IR) / CB$y.Ask.IR * 10000
 CB$DV01.Ask <- (1 + CB$Ask.chg.bp / 10000) * CB$DV01
 
+# Insert Result to [TestSherlock].[dbo].[Instant_DV01.Bond]
+
 CB <- CB[, -c(6:10)]
 
-
+# Close Connection to ODBC
+odbcClose(myCon_41)
