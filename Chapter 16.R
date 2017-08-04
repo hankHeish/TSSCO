@@ -48,7 +48,7 @@ sharpe <- (muP - mufree) / sdP
 ind <- (sharpe == max(sharpe))
 weights[ind, ]
 #Show line of Optimal Portfolio
-lines(c(0, 2), mufree + c(0, 2) * (muP[ind] - mufree) / sdP[ind], lwd = 4, lty = 1, col = "blue")
+lines(c(0, 2), mufree + c(0, 2) * (muP[ind] - mufree) / sdP[ind], lwd = 4, lty = 1, col = "darkblue")
 #Tangency Portfolio
 points(sdP[ind], muP[ind], cex = 2, pch = "*")
 
@@ -58,7 +58,7 @@ points(sdP[ind2], muP[ind2], cex = 2, pch = "+")
 
 ind3 <- (muP > muP[ind2])
 #lines(sdP[ind3], muP[ind3], type = "l", xlim = c(0, 0.25), ylim = c(0, 0.3), lwd = 3, col = "red")
-lines(sdP[ind3], muP[ind3], type = "l", lwd = 3, col = "red")
+lines(sdP[ind3], muP[ind3], type = "l", lwd = 3, col = "darkred")
 
 text(sd_vect[1], mean_vect[1], "GE", cex = 1.15)
 text(sd_vect[2], mean_vect[2], "IBM", cex = 1.15)
@@ -107,6 +107,7 @@ plot(sd_vect, mu_vect, type = "l", col = "darkgreen", main = "Efficiency Frontie
 
 # #16.10 R Lab
 # #Efficiency Equity Portfolio
+data <- read.csv("C:/Users/J1060019/Desktop/datasets/Stock_Bond.csv", header = T)
 prices <- cbind(data$GM_AC, data$F_AC, data$CAT_AC, data$UTX_AC, data$MRK_AC, data$IBM_AC)
 n <- dim(prices)[1]
 
@@ -118,7 +119,7 @@ cov_mat <- cov(returns)
 sd_vect <- sqrt(diag(cov_mat))
 
 Amat <- cbind(rep(1, 6), mean_vect, diag(1, nrow = 6), diag(-1, nrow = 6))
-muP <- seq(0.05, 0.14, length = 600)
+muP <- seq(0.05, 0.08, length = 600)
 sdP <- muP
 weight <- matrix(0, nrow = 600, ncol = 6)
 
@@ -151,11 +152,11 @@ index_min <- (sdP == min(sdP))
 points(sdP[index_min], muP[index_min], cex = 1, pch = "#")
 
 index_effi <- (muP > muP[index_min])
-lines(sdP[index_effi], muP[index_effi], cex = 1.5, type = "l", col = "darkred", lwd = 2)
+lines(sdP[index_effi], muP[index_effi], cex = 1.5, type = "l", xlim = c(0, 0.25), ylim = c(0, 0.3), col = "darkred", lwd = 2)
 
 brand <- c("GM", "F", "CAT", "UTX", "MRK", "IBM")
 for (i in 1:length(brand))
-    text(sd_vect[i], mean_vect[i], brand[i], cex = 1)
+    text(sd_vect[i], mean_vect[i], brand[i], cex = 1.5)
 
 
 
