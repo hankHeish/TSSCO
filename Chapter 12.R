@@ -335,7 +335,7 @@ legend(1975, 14, c("data", "predictions", "lower CL", "upper CL"),
 
 # Example 12.16 Forcasting the One-Month Inflation Rate and Changes in the Inflation Rate by Simulation
 # Figure 12.20
-data(Mishkin[, 1], package = "Ecdat")
+data(Mishkin, package = "Ecdat")
 infl <- as.vector(Mishkin[, 1])
 
 year <- seq(1950 + 1/12, 1990 + 11/12, 1/12)
@@ -356,6 +356,7 @@ n.ahead <- 30
 futureobs <- matrix(0, nrow = nither, ncol = n.ahead)
 future_int <- futureobs
 
+# Figure 12.21
 set.seed(1234657)
 for (i in 1:nither)
 {
@@ -384,29 +385,39 @@ for (k in 1:n.ahead)
 }
 
 plot(1:n.ahead, u1, ylim = c(-10, 10), type = "b", lwd = 2, xlab = "month rate", ylab = "rate", 
-     cex.axis = 1.5, cex.lab = 1.5)
+     main = "inflation forcasts sim", cex.axis = 1.5, cex.lab = 1.5)
 lines(l1, type = "b", lwd = 2)
 lines(1:n.ahead, pred.fit_diff$pred[1:n.ahead] - 1.96*pred.fit_diff[1:n.ahead], type = "b", lty = 3)
 lines(1:n.ahead, pred.fit_diff$pred[1:n.ahead] + 1.96*pred.fit_diff[1:n.ahead], type = "b", lty = 3)
 lines(1:n.ahead, future_mean, lwd = 2, lty = 2)
 
+plot(1:n.ahead, futureobs[1, ], ylim = c(-12, 12), type = "b", main = "inflation forcasts sim random",
+     xlab = "month", ylab = "rate", cex.axis = 1.5, cex.lab = 1.5, lwd = 2)
+for (i in 2:5)
+{
+    lines(1:n.ahead, future_int[i, ], type = "b", lty = i, lwd = 2)
+}
 
+# Figure 12.22
+u1_int <- 0*(1:n.ahead)
+l1_int <- 0*(1:n.ahead)
+for (k in 1:n.ahead)
+{
+    u1_int[k] <- quantile(future_int[, k], 0.975)
+    l1_int[k] <- quantile(future_int[, k], 0.025)
+}
+future_mean_int <- apply(future_int, 2, mean)
 
+plot(1:n.ahead, u1_int, ylim = c(-5, 15), type = "b", lwd = 2, xlab = "month ahead", ylab = "rate", 
+     main = "inflation forcasts sim integrated" , cex.axis=1.5,cex.lab=1.5)
+lines(l1_int, type = "b", lwd = 2)
+lines(future_mean_int)
 
+# Figure 12.17
+data(bmw, package = "evir")
+pacf(bmw, main = "simple PACF for daily BMW stock log returns")
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+# Figure 12.18
+data(Mishkin, package = "Ecdat")
+infl <- as.vector(Mishkin[, 1])
+pacf(diff(infl), main = "Change in Inflation rate")
