@@ -53,6 +53,54 @@ z <- as.ts(log(AirPassengers), stars = 1949, frequency = 12)
 
 plot(z, type = "b", ylab = "passenger", cex.axis = 1.5, cex.lab = 1.5, lwd = 2)
 
+# Example 13.2 Selecting a Transformation for the Housing Starts
+library(forecast)
+library(FitAR)
+
+y <- exp(Hstarts[, 1])
+par(mfrow = c(1, 1))
+plot(y)
+
+Hstart.arima <- arima(y, order = c(1, 1, 1), seasonal = list(order = c(1, 1, 1), period = 4))
+BoxCox.Arima(Hstart.arima)
+
+# Example 13.3 Residual Plot s for Weekly Interest Change
+# Figure 13.6
+library(car)
+library(lmtest)
+
+data <- read.table("C:/Users/J1060019/Desktop/datasets/WeekInt.txt", header = T)
+cm10_dif <- diff(data$cm10)
+aaa_dif <- diff(data$aaa)
+cm30_dif <- diff(data$cm30)
+
+fit <- lm(formula = aaa_dif ~ cm10_dif + cm30_dif)
+
+par(mfrow = c(1, 1))
+durbinWatsonTest(fit, max.lag = 1, rep = 1000)
+durbinWatsonTest(fit, max.lag = 1, rep = 10000)
+dwtest(fit, alternative = "two.sided", exact = F)
+dwtest(fit, alternative = "two.sided", exact = T)
+
+resid <- residuals(fit)
+
+n <- length(resid)
+tt <- (1:n) / (1 + n)
+
+par(mfrow = c(2, 2))
+qqnorm(ressid, datax = T, main = "(a) Normal Plot",xlab = "theoretical quantiles", 
+       ylab = "sample quantiles")
+qqline(resid, datax = T)
+qqplot(resid, (-0.00035 + 0.04058 * qt(tt, df = 3)), main = "(b) t-plot", 
+       ylab = "theoretical quantiles")
+abline(0, 1)
+acf(resid, main = "(c)", xlab = "lag")
+plot(fitted(fit), resid, main = "(d)", ylab = "Residuals", xlab = "fitted values")
+
+auto.arima(resid, ic = "bic")
+auto.arima(resid, ic = "aic")
+length(resid)
+
 # Example 13.5 Simulated Independent AR Process
 set.seed(997711)
 n <- 200
