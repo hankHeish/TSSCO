@@ -69,7 +69,8 @@ BoxCox.Arima(Hstart.arima)
 library(car)
 library(lmtest)
 
-data <- read.table("C:/Users/J1060019/Desktop/datasets/WeekInt.txt", header = T)
+# data <- read.table("C:/Users/J1060019/Desktop/datasets/WeekInt.txt", header = T)
+data <- read.table("/Users/Heishminghan/Desktop/Statistics and Data Analysis for Financial Engineering/WeekInt.txt", header = T)
 cm10_dif <- diff(data$cm10)
 aaa_dif <- diff(data$aaa)
 cm30_dif <- diff(data$cm30)
@@ -88,7 +89,7 @@ n <- length(resid)
 tt <- (1:n) / (1 + n)
 
 par(mfrow = c(2, 2))
-qqnorm(ressid, datax = T, main = "(a) Normal Plot",xlab = "theoretical quantiles", 
+qqnorm(resid, datax = T, main = "(a) Normal Plot",xlab = "theoretical quantiles", 
        ylab = "sample quantiles")
 qqline(resid, datax = T)
 qqplot(resid, (-0.00035 + 0.04058 * qt(tt, df = 3)), main = "(b) t-plot", 
@@ -100,6 +101,25 @@ plot(fitted(fit), resid, main = "(d)", ylab = "Residuals", xlab = "fitted values
 auto.arima(resid, ic = "bic")
 auto.arima(resid, ic = "aic")
 length(resid)
+
+# Example 13.4 Residual plots for weekly interest rate without differencing 
+library(xts)
+library(tseries)
+
+data <- read.table("/Users/Heishminghan/Desktop/Statistics and Data Analysis for Financial Engineering/WeekInt.txt", header = T)
+cm10_dif <- diff(data$cm10)
+aaa_dif <- diff(data$aaa)
+cm30_dif <- diff(data$cm30)
+
+fit1 <- lm(aaa_dif ~ cm10_dif + cm30_dif)
+fit2 <- lm(data$aaa ~ data$cm10 + data$cm30)
+
+par(mfrow = c(1, 2))
+dates <- as.Date(paste(data[, 2], data[, 1], data[, 3], sep = "/"), format = "%d/%m/%y")
+plot(xts(residuals(fit2), order.by = dates), ylab = "Residuals", main = "(a)", type = "l")
+acf(residuals(fit2), main = "(b) Residuals")
+
+
 
 # Example 13.5 Simulated Independent AR Process
 set.seed(997711)
