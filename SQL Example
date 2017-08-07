@@ -1,0 +1,65 @@
+====================子查詢====================
+select 日期, 股票代號, 收盤價 from 
+  (
+     select RowRank.* , ROW_NUMBER() over(partition by 股票代號 order by 日期 desc) as row_index from 
+     (
+         SELECT [日期],[股票代號],[收盤價] 
+		 FROM [Cmoney].[dbo].[日收盤表排行]
+         where year(日期) = '2017' and len(股票代號) = 4 and 股票代號 >= '1101'
+			and (left(股票代號, 2) = '28' or 股票代號 = '5880' or 股票代號 = '6005')
+			and 股票代號 <> '2841'
+     )RowRank
+  )Top50
+  where Top50.row_index <=50
+  
+  
+====================not in 用法====================
+SELECT [TxDate]
+      ,[TimeTag]
+      ,[TickPrice_TXF現貨]
+      ,[TickPrice_TXF近月]
+
+      ,[TickPrice_EXF現貨]
+      ,[TickPrice_EXF近月]
+
+      ,[TickPrice_FXF現貨]
+      ,[TickPrice_FXF近月]
+
+      ,[TickPrice_XIF現貨]
+      ,[TickPrice_XIF近月]
+
+  FROM [Intraday].[dbo].[指數期貨每分鐘_僅有Tick]
+  where (year(TxDate) = '2016' or year(TxDate) = '2017')
+		and MONTH(TxDate) not in ('5', '9')
+
+
+========================================
+SELECT [日期]
+      ,[股票代號]
+      ,[股票名稱]
+      ,[開盤價]
+      ,[最高價]
+      ,[最低價]
+      ,[收盤價]
+  FROM [Cmoney].[dbo].[日收盤表排行]
+  where year(日期) = '2017' and len(股票代號) = 4 and 股票代號 >= '1101'
+		and (left(股票代號, 2) = '28' or 股票代號 = '5880' or 股票代號 = '6005')
+		and 股票代號 <> '2841'
+  order by 日期
+
+========================================
+SELECT a.[公司代碼]
+      ,a.[年月日]
+      ,a.[成份股]
+      ,a.[股數]
+      ,b.[股數]
+      ,a.[前日調整收盤價]
+      ,a.[股數] - b.[股數] as diff
+  FROM [MarketData].[dbo].[TEJ指數成分股股數] a,  [MarketData].[dbo].[TEJ指數成分股股數] b
+  where a.年月日 = '2016-03-01' and b.年月日 = '2016-02-29' 
+		/*
+		and left(a.公司代碼, 5) = 'Y9999' and left(b.公司代碼, 5) = 'Y9999'
+		*/
+		and left(a.成份股, 4) = '1464' and left(b.成份股, 4) = '1464'
+		and a.成份股 = b.成份股
+  order by a.成份股
