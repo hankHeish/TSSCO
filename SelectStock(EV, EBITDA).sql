@@ -1,7 +1,3 @@
-/****** SSMS 中 SelectTopNRows 命令的指令碼  ******/
-  
---Create table #template(日期 datetime, 年季 nvarchar(50), 股票代號 nvarchar(50), LogRet numeric(18, 4), PortGroup numeric(18, 4))
---create table #取樣區間(年季 nvarchar(50),BDate datetime,EDate datetime)
 
 
 Create table #template(日期 datetime, 年季 nvarchar(50), 股票代號 nvarchar(50), LogRet numeric(18, 4), PortGroup numeric(18, 0))
@@ -49,7 +45,7 @@ from
 						--,ALSheet.[現金及約當現金(千)]
 						--, CloPrc.股票代號
 						--, CloPrc.收盤價
-						ALSheet.[股本(千)] * CloPrc.收盤價 - ALSheet.[負債總計(千)] + ALSheet.[現金及約當現金(千)] as EV,
+						ALSheet.[股本(千)] * CloPrc.收盤價 + ALSheet.[負債總計(千)] - ALSheet.[現金及約當現金(千)] as EV,
 						--, Debt.年季
 						--, Debt.股票代號
 						Debt.EBITDA
@@ -112,27 +108,27 @@ from
 		FROM
 		(
 			SELECT *, 
-					case
-						when MMDD > '0515' and MMDD <= '0814' then CONCAT(YEAR(日期), '01') 
-						when MMDD > '0814' and MMDD <= '1114' then CONCAT(YEAR(日期), '02') 
-						when (MMDD > '1114' and MMDD <= '1231') then CONCAT(YEAR(日期), '03') 
-						when (MMDD > '0101' and MMDD <= '0515') then CONCAT(YEAR(日期) - 1, '03') 
-						when MMDD > '0331' and MMDD <= '0515' then CONCAT(YEAR(日期) - 1, '04') 
-					end as FinQutar,
-					LAG(收盤價)  over(partition by 股票代號 order by  日期) as PrevPrice
-					--LOG(收盤價/LAG(收盤價, 1)) as ret
+				   case
+					   when (MMDD > '0515' and MMDD <= '0814') then CONCAT(YEAR(日期), '01') 
+					   when (MMDD > '0814' and MMDD <= '1114') then CONCAT(YEAR(日期), '02') 
+					   when (MMDD > '1114' and MMDD <= '1231') then CONCAT(YEAR(日期), '03') 
+					   when (MMDD > '0101' and MMDD <= '0331') then CONCAT(YEAR(日期) - 1, '03') 
+					   when (MMDD > '0331' and MMDD <= '0515') then CONCAT(YEAR(日期) - 1, '04') 
+				   end as FinQutar,
+				   LAG(收盤價)  over(partition by 股票代號 order by  日期) as PrevPrice
+				--LOG(收盤價/LAG(收盤價, 1)) as ret
 			from 
 			(
 				SELECT [日期]
-						,[股票代號]
-						,[股票名稱]
-						,[開盤價]
-						,[收盤價]
-						, SUBSTRING(CONVERT(nvarchar, 日期, 112), 5, 8) as MMDD
-					FROM [Cmoney].[dbo].[日收盤表排行]
-					where YEAR(日期) between '2010' and '2017'
-						and 股票代號 between '1101' and '9962'
-						and LEN(股票代號) = 4
+					,[股票代號]
+					,[股票名稱]
+					,[開盤價]
+					,[收盤價]
+					, SUBSTRING(CONVERT(nvarchar, 日期, 112), 5, 8) as MMDD
+				FROM [Cmoney].[dbo].[日收盤表排行]
+				where YEAR(日期) between '2010' and '2017'
+					and 股票代號 between '1101' and '9962'
+					and LEN(股票代號) = 4
 			)as PrcTable
 		)as Ret
 		--order by  Ret.股票代號, Ret.日期
@@ -142,34 +138,75 @@ from
 
 --select * from #template
 
+select * 
+from #template
+order by 日期
+
+create table #ESTable(日期 datetime, 年季 nvarchar(50), AvgDailyLogRet numeric(18, 4), PortGroup numeric(18, 0), AvgIdxLogRet numeric(18, 4), ES numeric(18, 4), P numeric(18, 0), Q numeric(18, 0))
+insert #ESTable
 select *, 
-	   ESTable.DailyLogRet - ESTable.AvgIndexRet as ES
+	   case 
+			when ES > 0 then 1
+			else 0
+	   end as P,
+	   case 
+			when ES < 0 then 1
+			else 0
+	   end as Q
 from
 (
 	select *, 
-		   SUM(AvgTableIndex.DailyLogRet) over(partition by 日期 order by 日期) / 6 as AvgIndexRet
+		   AvgDailyLogRet - AvgIdxLogRet_byDate as ES
 	from
 	(
-		select TableIndex.日期, 
+		select  TableIndex.日期, 
 				TableIndex.年季, 
-				TableIndex.DailyLogRet / 30 as DailyLogRet, 
-				TableIndex.PortGroup
+				TableIndex.AvgDailyLogRet, 
+				TableIndex.PortGroup,
+				AVG(AvgDailyLogRet) over(partition by 日期 order by 日期) as AvgIdxLogRet_byDate
 		from 
 		(
 			select * , 
-					SUM(LogRet) over(partition by 日期, PortGroup order by 日期, PortGroup) as DailyLogRet, 
-					ROW_NUMBER() over (partition by 日期, PortGroup order by 日期, PortGroup) as RowIndex
+					AVG(LogRet) over(partition by 日期, PortGroup order by 年季, PortGroup) as AvgDailyLogRet, 
+					ROW_NUMBER() over (partition by 日期, PortGroup order by 年季, PortGroup) as RowIndex
 			from #template
 		)as TableIndex
 		where TableIndex.RowIndex = 1
-	)as AvgTableIndex
+	)as PortfES
 )as ESTable
 order by ESTable.日期, ESTable.PortGroup
 
+--select * from #ESTable
+
+create table #PQUDTable(年季 nvarchar(50), PortGroup numeric(18, 0), AvgIdxRet numeric(18, 4), AvgPU numeric(18, 4), AvgQD numeric(18, 4), AvgPQUD numeric(18, 4))
+insert #PQUDTable
+select PUQDtable.年季, 
+	   PUQDtable.PortGroup, 
+	   PUQDtable.AvgIdxLogRet,
+	   PUQDtable.AvgPU, 
+	   PUQDtable.AvgQD, 
+	   PUQDtable.AvgPUQD
+from
+(
+	select *,
+		   AVG(PU) over(partition by 年季, PortGroup order by 年季, PortGroup) as AvgPU,
+		   AVG(QD) over(partition by 年季, PortGroup order by 年季, PortGroup) as AvgQD,
+		   AVG(PU + QD) over(partition by 年季, PortGroup order by 年季, PortGroup) as AvgPUQD,
+		   ROW_NUMBER() over(partition by 年季, PortGroup order by 年季, PortGroup) as RowIndex
+	from
+	(
+		select *,
+			   AvgDailyLogRet * P as PU, 
+			   AvgDailyLogRet * Q as QD
+		from #ESTable
+	)as Cal_PUQD
+)as PUQDtable
+where PUQDtable.RowIndex = 1
+order by PUQDtable.年季
 
 
-
-
-
+select * from #PQUDTable
 
 drop table #template
+drop table #ESTable
+drop table #PQUDTable
