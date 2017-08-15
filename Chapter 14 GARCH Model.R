@@ -134,8 +134,198 @@ acf(y[10001:n]^2, main = "(h) AR + GARCH squared")
 # Example 14.2 AR(1) + GARCH(1, 1) Model to Fit Daily BMW Stock Log Returns
 library(xts)
 library(rugarch)
+library(MASS)
 
 data(bmw, package = "evir")
+
+arma.garch.norm <- ugarchspec(mean.model = list(armaOrder = c(1, 0)), 
+                              variance.model = list(garchOrder = c(1, 1)))
+bmw.garch.norm <- ugarchfit(data = bmw, spec = arma.garch.norm)
+
+print(bmw.garch.norm)
+plot(bmw.garch.norm, which = "all")
+
+e <- residuals(bmw.garch.norm, standardize = TRUE)
+fitdist(e, "t")
+
+n <- length(e)
+grid <- (1:n)/(1 + n)
+par(mfrow = c(1, 1))
+qqplot(sort(as.numeric(e)), qt(grid, df = 4), 
+       main = "t-plot, df = 4", xlab = "Standardized Residual Quantiles",
+       ylab = "t-quantiles")
+abline(lm(qt(c(0.25, 0.75), df = 4) ~ quantile(e, c(0.25, 0.75))))
+
+par(mfrow = c(3, 2))
+for(i in c(1, 3, 10, 11, 8, 9))
+    plot(bmw.garch.norm, which = i)
+
+arma.garch.t <- ugarchspec(mean.model = list(armaOrder = c(1, 0)), 
+                           variance.model = list(garchOrder = c(1, 1)),
+                           distribution.model = "std")
+bmw.garch.t <- ugarchfit(data = bmw, spec = arma.garch.t)
+print(bmw.garch.t)
+par(mfrow = c(3, 2))
+for(i in c(1, 3, 10, 11, 8, 9))
+    plot(bmw.garch.t, which = i)
+
+# Figure 14.6
+rho <- function(a, b){
+    c(1, a*(1 - a*b - b^2)/(1 - 2*a*b - b^2) * (a + b)^(0:9))
+}
+
+target <- 0.5
+
+a1 <- 0.1
+b1 <- uniroot(f = function(b){rho(a1, b)[2] - target}, interval = c(0, 1 - a1))$root
+
+a2 <- 0.3
+b2 <- uniroot(f = function(b){rho(a2, b)[2] - target}, interval = c(0, 1 - a2))$root
+
+a3 <- 0.5
+b3 <- uniroot(f = function(b){rho(a3, b)[2] - target}, interval = c(0, 1 - a3))$root
+
+plot(0:10, rho(a1, b1), type = "b", ylim = c(0, 1), lty = 1, lwd = 2, 
+     ylab = expression(paste(rho[a^2], "(h)")), xlab = "h")
+lines(0:10, rho(a2, b2), type = "b", lty = 2, lwd = 2)
+lines(0:10, rho(a3, b3), type = "b", lty = 3, lwd = 2)
+legend("topright", c(expression(paste(alpha, " = 0.1, ", beta, " = 0.894")), 
+                     expression(paste(alpha, " = 0.3, ", beta, " = 0.604")), 
+                     expression(paste(alpha, " = 0.5, ", beta, " = 0"))),
+       lty = 1:3, lwd = 2)
+
+# Figure 14.7 ACF of the Squared Residuals form an AR(1) Fit to the BMW Log Returns
+data(bmw, package = "evir")
+res <- residuals(arima(bmw, order = c(1, 0, 0)))
+
+acf(res^2)
+
+# Example 14.4 Regression Analysis with ARMA + GARCH Errors of the Nelson-Plosser Data
+library(forecast)
+library(tseries)
+
+nelsonplosser <- read.csv("C:/Users/J1060019/Desktop/datasets/nelsonplosser.csv", header = T)
+new_np <- na.omit(nelsonplosser)
+n <- nrow(new_np)
+
+fit.lm1 <- lm(diff(log(new_np$sp)) ~ diff(log(new_np$ip)) + diff(new_np$bnd))
+summary(fit.lm1)
+resid.lm1 <- resid(fit.lm1)
+
+auto.arima(resid.lm1)
+
+xregression <- cbind(diff(log(new_np$ip)), diff(new_np$bnd))
+fit.arma <- arima(diff(log(new_np$sp)), xreg = xregression, order = c(0, 0, 1))
+print(fit.arma)
+resid.arma <- fit.arma$res
+
+fit.arch <- garch(resid.arma, order = c(0, 1), trace = F)
+summary(fit.arch)
+resid.arch <- fit.arch$residuals
+sigma.arch <- as.numeric(fit.arch$fitted.values[, 1])
+
+par(mfrow = c(1, 2))
+ts.plot(sigma.arch)
+acf(na.omit(resid.arch))
+
+nelploss.arch.std.res <- as.numeric(resid.arch/sigma.arch)[-1]
+
+par(mfrow = c(2, 2))
+acf(rstudent(fit.lm1), main = "(a) regression: residuals")
+acf(rstudent(fit.lm1)^2, main = "(b)regression: squared residuals")
+acf(nelploss.arch.std.res, main = "(c) MA/ARCH: residuals")
+acf(nelploss.arch.std.res^2, main = "(d) MA/ARCH: squared ")
+
+fit.lm3 <- lm(diff(log(sp)) ~ diff(log(ip)) + diff(bnd), weights = 1/sigma.arch^2)
+summary(fit.lm3)
+
+par(mfrow = c(1, 1))
+plot(fitted(fit.lm1)[-1], fitted(fit.lm3))
+abline(0, 1)
+
+# Example 14.5 Forcasting BMW log Returns
+library(xts)
+library(rugarch)
+library(xts)
+
+data(bmw, package = "evir")
+n <- length(bmw)
+date <- attr(bmw, "time")
+
+origin1 <- 4100
+data[origin1]
+origin2 <- 3880
+data[origin2]
+nahead = 1500
+
+garch.norm <- ugarchspec(mean.model = list(armaOrder = c(1, 0)),
+                         variance.model = list(garchOrder = c(1, 1)))
+
+bmw.garch.norm.1 <- ugarchfit(data = bmw[1:origin1], spec = garch.norm)
+pred1 <- ugarchforecast(bmw.garch.norm.1, data = bmw[1:origin1], n.ahead = nahead)
+head(fitted(pred1))
+head(sigma(pred1))
+
+bmw.garch.norm.2 <- ugarchfit(data = bmw[1:origin2], spec = garch.norm)
+pred2 <- ugarchforecast(bmw.garch.norm.2, data = bmw[1:origin2], n.ahead = nahead)
+head(fitted(pred2))
+head(sigma(pred2))
+
+BMW <- xts(bmw, attr(bmw, "times"))
+
+plot(BMW, type = "l", xlab = "year", ylab = "log return", ylim = c(-0.13, 0.21), 
+     xlim = c(date[3393], date[5219]), main = "Forcasting BMW Returns")
+lines(date[(origin2 + 1):(origin2 + nahead)], fitted(pred2) + 1.96*sigma(pred2), col = 5, lwd = 4)
+lines(date[(origin2 + 1):(origin2 + nahead)], fitted(pred2) - 1.96*sigma(pred2), col = 5, lwd = 4)
+
+lines(date[(origin1 + 1):(origin1 + nahead)], fitted(pred1) + 1.96*sigma(pred1), col = 2, lwd = 4)
+lines(date[(origin1 + 1):(origin1 + nahead)], fitted(pred1) - 1.96*sigma(pred1), col = 2, lwd = 4)
+
+legend("topleft", c("11-15-87", "9-18-88"), lty = c(1, 2), lwd = 4, col = c(5, 2))
+
+# Figure 14.11
+data(CRSPday, package = "Ecdat")
+CRSPday <- ts(CRSPday, start = c(1989, 1), frequency = 253)
+ibm <- CRSPday[, 5] * 100
+crsp <- CRSPday[, 7] * 100
+Y <- cbind(ibm, crsp)
+
+par(mfrow = c(2, 1))
+plot(Y[, 1], type = "l", xlab = "year", ylab = "return (%)", main = "(a)")
+plot(Y[, 2], type = "l", xlab = "year", ylab = "return (%)", main = "(b)")
+
+# Figure 14.12
+layout(rbind(c(1, 2), c(3, 3)), widths = c(1, 1, 2), heights = c(1, 1))
+acf(as.numeric(Y[, 1]), ylim = c(-0.1, 0.1), main = "(a)")
+acf(as.numeric(Y[, 2]), ylim = c(-0.1, 0.1), main = "(b)")
+ccf(as.numeric(Y[, 1]), as.numeric(Y[, 2]), type = c("correlation"), 
+    ylab = "CCF", lag = 20)
+
+cor(ibm, crsp)
+
+# MV Box-Ljung test for bivariate returns 
+source("SDAFE2.R")
+mLjungBox(Y, 5)
+
+# Fitting an VAR(1) Model(for simplicity)
+fit.AR1 <- ar(Y, aic = FALSE, order.max = 1)
+
+A <- fit.AR1$resid[-1, ]
+mLjungBox(A, 5)
+
+# Figure 14.13
+par(mfrow = c(2, 2))
+acf(A[, 1]^2, ylim = c(-0.05, 0.35), main = "(a)")
+acf(A[, 2]^2, ylim = c(-0.05, 0.35), main = "(b)")
+ccf(A[, 1]^2, A[, 2]^2, type = c("correlation"), main = "(c)", ylab = "CCF", lag = 20)
+acf(A[, 1]*A[, 2], ylim = c(-0.05, 0.35), main = "(d)")
+
+# Figure 14.14
+source("SDAFE2.R")
+
+
+
+
 
 
 
