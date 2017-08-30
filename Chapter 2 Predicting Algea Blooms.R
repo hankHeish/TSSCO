@@ -5,14 +5,14 @@ library(DMwR)
 head(algae)
 
 # 2.3 Loading the Data into R
-algae <- read.table(file = "C:/Users/J1060019/Desktop/datasets/Analysis.txt", 
+algae <- read.table(file = "/Users/Heishminghan/Desktop/Analysis.txt", 
                     head = F, 
                     dec = '.', 
                     col.names = c('season', 'size', 'speed', 'mxPH', 'mnO2', 'C1', 'NO3', 'NH4', 
                                   'oPO4', 'PO4', 'Chla', 'a1', 'a2', 'a3', 'a4', 'a5', 'a6', 'a7'),
                     na.strings = c('XXXXXXX'))
 
-# Data Visualization and Summarization
+# 2.4 Data Visualization and Summarization
 summary(algae)
 
 hist(algae$mxPH, prob = T)
@@ -51,6 +51,36 @@ bwplot(size ~ a1, data = algae, panel = panel.bpplot, probs = seq(0.01, 0.49, by
 
 minO2 <- equal.count(na.omit(algae$mnO2), number = 4, overlap = 1/5)
 stripplot(season ~ a3|minO2, data = algae[!is.na(algae$mnO2), ])
+
+# 2.5 Unknown Vlues
+# 2.5.1 Removing the Observations with Unknown Values
+library(DMwR)
+data(algae)
+
+algae[!complete.cases(algae), ]
+
+nrow(algae[!complete.cases(algae), ])
+
+algae <- na.omit(algae)
+algae <- algae[-c(62, 199), ]
+
+apply(algae, 1, function(x) sum(is.na(x)))
+
+data(algae)
+manyNAs(algae, 0.2)
+
+algae <- algae[-manyNAs(algae, 0.2), ]
+
+# 2.5.2 Filling in the Unknowns with the Most Frequent Values
+algae[48, "mxPH"] <- mean(algae$mxPH, na.rm = T)
+algae[is.na(algae$Chla), "Chla"] <- median(algae$Chla, na.rm = T)
+
+data("algae")
+algae <- algae[-manyNAs(algae), ]
+algae <- centralImputation(algae)
+
+
+
 
 
 
