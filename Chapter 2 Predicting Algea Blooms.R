@@ -5,12 +5,13 @@ library(DMwR)
 head(algae)
 
 # 2.3 Loading the Data into R
-algae <- read.table(file = "/Users/Heishminghan/Desktop/Analysis.txt", 
+algae <- read.table(file = "C:/Users/J1060019/Desktop/datasets/Analysis.txt", 
                     head = F, 
                     dec = '.', 
                     col.names = c('season', 'size', 'speed', 'mxPH', 'mnO2', 'C1', 'NO3', 'NH4', 
                                   'oPO4', 'PO4', 'Chla', 'a1', 'a2', 'a3', 'a4', 'a5', 'a6', 'a7'),
                     na.strings = c('XXXXXXX'))
+# file = "/Users/Heishminghan/Desktop/Analysis.txt"
 
 # 2.4 Data Visualization and Summarization
 summary(algae)
@@ -36,9 +37,9 @@ abline(h = mean(algae$oPO4, na.rm = T), lty = 2)
 # abline(h = median(algae$NH4, na.rm = T), lty = 3)
 # identify(algae$NH4)
 
-plot(algae$NH4, xlab = "")
-click.lines <- identify(algae$NH4)
-algae[click.lines, ]
+# plot(algae$NH4, xlab = "")
+# click.lines <- identify(algae$NH4)
+# algae[click.lines, ]
 
 algae[algae$NH4 > 19000, ]
 
@@ -78,6 +79,99 @@ algae[is.na(algae$Chla), "Chla"] <- median(algae$Chla, na.rm = T)
 data("algae")
 algae <- algae[-manyNAs(algae), ]
 algae <- centralImputation(algae)
+
+# 2.5.3 Filling in the Unknown Values by Exploring Correlations 
+cor(algae[, 4:18], use = "complete.obs")
+
+symnum(cor(algae[, 4:18], use = "complete.obs"))
+
+data(algae)
+algae <- algae[-manyNAs(algae), ]
+fit <- lm(PO4 ~ oPO4, data = algae)
+
+alpha <- fit$coefficients[1]
+beta <- fit$coefficients[2]
+
+algae[28, 'PO4'] <- alpha + beta *algae[28, 'oPO4']
+
+data(algae)
+algae <- algae[-manyNAs(algae), ]
+
+fillPO4 <- function(oP){
+    if (is.na(oP)){
+        return (NA)
+    }else{
+        return (alpha + beta*oP)
+    }
+}
+algae[is.na(algae$PO4), 'PO4'] <- sapply(algae[is.na(algae$PO4), 'oPO4'], fillPO4)
+
+histogram(~ mxPH|season, data = algae)
+
+algae$season <- factor(algae$season, levels = c('spring', 'summer', 'autumn', 'winter'))
+histogram(~ mxPH | size*speed, data = algae)
+stripplot(size ~ mxPH|speed, data = algae, jitter = T)
+
+# 2.5.4 Filling in the Unknown Values by Exploring Similarities between Cases
+data(algae)
+algae <- algae[-manyNAs(algae), ]
+algae <- knnImputation(algae, k = 10)
+algae <- knnImputation(algae, k = 10, meth = 'median')
+
+
+# 2.6 Obtaining Prediction Models
+# 2.6.1 Multiple Linear Regression
+data(algae)
+algae <- algae[-manyNAs(algae), ]
+clean.algae <- knnImputation(algae, k = 10)
+
+lm.a1 <- lm(a1 ~ ., data = clean.algae[, 1:12])
+summary(lm.a1)
+anova(lm.a1)
+
+lm2.a1 <- lm(a1 ~ . - season, data = clean.algae[, 1:12])
+summary(lm2.a1)
+anova(lm.a1, lm2.a1)
+
+final.lm <- step(lm.a1)
+summary(final.lm)
+
+# 2.6.2 Regression Trees
+library(rpart)
+library(tree)
+data(algae)
+algae <- algae[-manyNAs(algae), ]
+
+rt.a1 <- rpart(a1 ~ ., data = algae[, 1:12])
+
+rt.a1
+prettyTree(rt.a1)
+printcp(rt.a1)
+
+rt2.a1 <- prune(rt.a1, cp = 0.08)
+rt2.a1
+
+set.seed(1234)
+rt.a1 <- rpartXse(a1 ~ ., data = algae[, 1:12])
+
+first.tree <- rpart(a1 ~ ., data = algae[, 1:12])
+snip.rpart(first.tree, c(4, 7))
+
+prettyTree(first.tree)
+snip.rpart(first.tree)
+
+# 2.7 Model Evaluation and Selection
+lm.predictions.a1 <- predict(final.lm, clean.algae)
+rt.predictions.a1 <- predict(rt.a1, algae)
+
+mae.a1.lm <- mean(abs(lm.predictions.a1 - algae[, 'a1']))
+mae.a1.rt <- mean(abs(rt.predictions.a1 - algae[, 'a1']))
+
+mse.a1.lm <- mean((lm.predictions.a1 - algae[, 'a1'])^2)
+mse.a1.rt <- mean((rt.predictions.a1 - algae[, 'a1'])^2)
+
+nmse.a1.lm <- mean((lm.predictions.a1 - algae[, 'a1'])^2) / mean((mean(algae[, 'a1']) - algae[, 'a1'])^2)
+nmse.a1.rt <- mean((rt.predictions.a1 - algae[, 'a1'])^2) / mean((mean(algae[, 'a1']) - algae[, 'a1'])^2)
 
 
 
