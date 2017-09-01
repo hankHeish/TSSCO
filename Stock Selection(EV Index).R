@@ -210,7 +210,7 @@ for (TestYr in Period){
         select(日期, 股票代號, 股票名稱, LogRet) %>%
         arrange(日期, 股票代號)
        
-    # Delete Stock Return on the First Day of Quarter
+    # Delete Stock Return in the First Day of Each Quarter
     Adj.Stock.Ret <- Adj.Stock.Ret[!substring(Adj.Stock.Ret$日期, 6, 10) %in% c("01-01", "04-01", "07-01", "10-01"), ]
 
     
